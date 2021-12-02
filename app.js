@@ -3,6 +3,7 @@ const path = require("path");
 const ejs = require("ejs");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
+const cors = require("cors");
 const {
     uuid
 } = require("uuidv4");
@@ -11,15 +12,18 @@ const {
     Config,
     CheckoutAPI
 } = require("@adyen/api-library");
-const {
-    report
-} = require("process");
-const {
-    PerformanceNodeTiming
-} = require("perf_hooks");
 
 // init app
 const app = express();
+
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+//     next();
+// });
+
+app.use(cors());
+
 // setup request logging
 app.use(morgan("dev"));
 // Parse JSON bodies
@@ -40,7 +44,7 @@ dotenv.config({
 // register ejs view engine 
 app.set('view engine', 'ejs');
 
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 8080
 
 // Adyen Node.js API library boilerplate (configuration, etc.)
 const config = new Config();
@@ -87,7 +91,7 @@ app.post('/api/initiatePayment', async function (req, res) {
             additionalData: {
                 allow3DS2: true
             },
-            returnUrl: `http//localhost:3000/api/handleShopperRedirect?orderRef=${orderRef}`,
+            returnUrl: `http//localhost:8080/api/handleShopperRedirect?orderRef=${orderRef}`,
             browserInfo: req.body.browserInfo,
             paymentMethod: req.body.paymentMethod
         })
