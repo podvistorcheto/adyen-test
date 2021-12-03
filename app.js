@@ -3,7 +3,7 @@ const path = require("path");
 const ejs = require("ejs");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
-const cors = require("cors");
+// const cors = require("cors");
 const {
     uuid
 } = require("uuidv4");
@@ -16,13 +16,13 @@ const {
 // init app
 const app = express();
 
-// app.use((req, res, next) => {
-//     res.header('Access-Control-Allow-Origin', '*');
-//     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-//     next();
-// });
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+});
 
-app.use(cors());
+// app.use(cors());
 
 // setup request logging
 app.use(morgan("dev"));
@@ -44,8 +44,6 @@ dotenv.config({
 // register ejs view engine 
 app.set('view engine', 'ejs');
 
-const port = process.env.PORT || 8080
-
 // Adyen Node.js API library boilerplate (configuration, etc.)
 const config = new Config();
 config.apiKey = process.env.API_KEY;
@@ -66,7 +64,7 @@ app.get("/", async (req, res) => {
             channel: "Web",
             merchantAccount: process.env.MERCHANT_ACCOUNT,
         });
-        //res.json(response); // test
+        // res.json(response); // test
         res.render("payment", {
             clientKey: process.env.CLIENT_KEY,
             response: JSON.stringify(response)
@@ -87,7 +85,7 @@ app.post('/api/initiatePayment', async function (req, res) {
             },
             reference: orderRef,
             merchantAccount: process.env.MERCHANT_ACCOUNT,
-            channel: "WEB",
+            channel: "Web",
             additionalData: {
                 allow3DS2: true
             },
@@ -105,7 +103,8 @@ app.post('/api/initiatePayment', async function (req, res) {
         }
 
         res.json({
-            resultCode
+            resultCode,
+            action
         });
     } catch (error) {
         console.error(error);
@@ -145,13 +144,6 @@ app.all('/api/handle/ShopperRedirect', async function (req, res) {
     }
 });
 
-// user routes
-
-app.get("/success", (req, res) => res.render("success"));
-app.get("/pending", (req, res) => res.render("processing"));
-app.get("/error", (req, res) => res.render("error"));
-app.get("/not-paid", (req, res) => res.render("not-processed"));
-
 // redirect method for inserting additional details
 app.post('/api/submitAdditionalDetails', async function (req, res) {
     const payload = {};
@@ -173,6 +165,14 @@ app.post('/api/submitAdditionalDetails', async function (req, res) {
     }
 })
 
+// user routes
+app.get("/success", (req, res) => res.render("success"));
+app.get("/pending", (req, res) => res.render("processing"));
+app.get("/error", (req, res) => res.render("error"));
+app.get("/not-paid", (req, res) => res.render("not-processed"));
+
+
+const port = process.env.PORT || 8080
 app.listen(port, function () {
     console.log(`Server listening on port ${port}...`)
 })

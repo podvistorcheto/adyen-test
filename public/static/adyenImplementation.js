@@ -4,17 +4,20 @@ async function callServer(url, data) {
             method: "POST",
             body: JSON.stringify(data),
             headers: {
-                "Content-Type": "application/json"
-            }
-        })
-        return response.json();
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(body, 'utf8'),
+                'X-Api-Key': API_KEY
+            },
+        });
+        return await response.json();
     } catch (error) {
-        console.error(error);        
+        console.error(error);
     }
 }
 
-function handleServerResponse(res, dropin){
-    if(res.action) {
+function handleServerResponse(res, dropin) {
+    if (res.action) {
         dropin.handleAction(res.action);
     } else {
         switch (res.resultCode) {
@@ -27,8 +30,8 @@ function handleServerResponse(res, dropin){
             case "Refused":
                 window.location.href = "/not-processed";
                 break;
-            // handle default error result
-            default: 
+                // handle default error result
+            default:
                 window.location.href = "/error";
                 break;
         }
@@ -39,7 +42,7 @@ async function handleSubmission(state, dropin, url) {
     try {
         const response = await callServer(url, state.date);
         return handleServerResponse(response, dropin);
-    } catch(error) {
+    } catch (error) {
         console.error(error);
     }
 }
