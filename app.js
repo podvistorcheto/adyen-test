@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 });
 
 // app.use(cors());
-
+const port = process.env.PORT || 8080
 // setup request logging
 app.use(morgan("dev"));
 // Parse JSON bodies
@@ -83,7 +83,7 @@ app.post('/api/initiatePayment', async function (req, res) {
                 currency: "EUR",
                 value: 1000
             },
-            reference: orderRef,
+            reference: uniqueOrderRef,
             merchantAccount: process.env.MERCHANT_ACCOUNT,
             channel: "Web",
             additionalData: {
@@ -95,10 +95,9 @@ app.post('/api/initiatePayment', async function (req, res) {
         })
         let resultCode = response.resultCode;
         let action = null;
-
-        // if clients needs additional action to finalize the payment like paying IDEAL
+        // if clients needs additional action to finalize the payment like paying with IDEAL
         if (response.action) {
-            actions = response.action;
+            action = response.action;
             paymentDataStore[orderRef] = action.paymentData;
         }
 
@@ -108,12 +107,11 @@ app.post('/api/initiatePayment', async function (req, res) {
         });
     } catch (error) {
         console.error(error);
-
     }
 });
 
 // method for redirecting the client
-app.all('/api/handle/ShopperRedirect', async function (req, res) {
+app.all('/api/handleShopperRedirect', async function (req, res) {
     const payload = {};
     payload['details'] = req.method === 'GET' ? req.query : req.body;
 
@@ -122,7 +120,7 @@ app.all('/api/handle/ShopperRedirect', async function (req, res) {
     delete paymentDataStore[orderRef];
 
     try {
-        const response = await checkout.paymentsDetails(paylod);
+        const response = await checkout.paymentsDetails(payload);
 
         switch (response.resultCode) {
             case "Authorised":
@@ -132,7 +130,7 @@ app.all('/api/handle/ShopperRedirect', async function (req, res) {
             case "Received":
                 res.redirect("/processing");
                 break;
-            case "Pefused":
+            case "Refused":
                 res.redirect("/not_processed");
                 break;
             default:
@@ -172,7 +170,6 @@ app.get("/error", (req, res) => res.render("error"));
 app.get("/not-paid", (req, res) => res.render("not-processed"));
 
 
-const port = process.env.PORT || 8080
 app.listen(port, function () {
     console.log(`Server listening on port ${port}...`)
 })

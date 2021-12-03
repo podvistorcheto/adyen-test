@@ -1,3 +1,26 @@
+const paymentMethodsResponse = JSON.parse(
+    document.getElementById("paymentMethodsResponse").innerHTML
+);
+const clientKey = document.getElementById("clientKey").innerHTML;
+
+const configuration = {
+    paymentMethodsResponse,
+    clientKey,
+    locale: "en_US",
+    environment: "test",
+    paymentMethodsConfiguration: {
+        card: {
+            hasHolderName: true,
+        },
+    },
+    onSubmit: (state, component) => {
+        handleSubmission(state, component, "/api/initiatePayment");
+    },
+    onAdditionalDetails: (state, component) => {
+        handleSubmission(state, component, "/api/submitAdditionalDetails");
+    },
+};
+
 async function callServer(url, data) {
     try {
         const response = await fetch(url, {
@@ -6,11 +29,10 @@ async function callServer(url, data) {
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(body, 'utf8'),
                 'X-Api-Key': API_KEY
             },
         });
-        return await response.json();
+        return response.json();
     } catch (error) {
         console.error(error);
     }
@@ -44,27 +66,6 @@ async function handleSubmission(state, dropin, url) {
         return handleServerResponse(response, dropin);
     } catch (error) {
         console.error(error);
-    }
-}
-
-const paymentMethodsResponse = JSON.parse(document.getElementById("paymentMethodsResponse").innerHTML);
-const clientKey = document.getElementById("clientKey").innerHTML;
-
-const configuration = {
-    paymentMethodsResponse,
-    clientKey,
-    locale: "en-US",
-    environment: 'test',
-    paymentMethodsConfiguration: {
-        card: {
-            hasHolderName: true
-        }
-    },
-    onsubmit: (state, dropin) => {
-        handleSubmission(state, dropin, "/api/initiatePayment");
-    },
-    onAdditionalDetails: (state, dropin) => {
-        handleSubmission(state, dropin, "/api/submitAdditionalDetails");
     }
 }
 
